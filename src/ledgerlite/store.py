@@ -6,10 +6,15 @@ from pathlib import Path
 
 from .models import Entry
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 # Maps a schema version to the function that upgrades a raw file dict to the next version.
-MIGRATIONS: dict[int, Callable[[dict], dict]] = {}
+MIGRATIONS: dict[int, Callable[[dict], dict]] = {
+    1: lambda data: {
+        **data,
+        "entries": [{**e, "currency": "INR"} for e in data.get("entries", [])],
+    },
+}
 
 
 def _migrate(data: dict) -> dict:
