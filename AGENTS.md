@@ -11,13 +11,23 @@ This is the portable instruction file for any coding agent that opens this repo.
 - Run: `python -m ledgerlite.cli --ledger demo.json add --category food --amount 120.50`
 
 ## Conventions
-<!-- TODO (Chapter 4): code layout, naming, where tests go, formatting, commit message style -->
+- Code lives under src/ledgerlite/; tests live under tests/ and - mirror the module names.
+- Use ruff for formatting and linting with a line length of 100.
+- Use Decimal for money; never use float for monetary amounts.
+- Use Conventional Commits: feat:, fix:, test:, or docs:.
 
 ## Definition of done
-<!-- TODO (Chapter 4): what must be true before a task is finished. Hint: verify passes, tests added for new behaviour, no unrelated files touched -->
+- Run python scripts/verify.py; it must print VERIFY PASS.
+- Add tests for every new behaviour.
+- Keep the diff limited to the files required by the task.
+- Report the files changed, tests added, and verify result.
 
 ## Never do
-<!-- TODO (Chapter 4): actions the agent must refuse or ask about first. Hint: network calls, schema edits without a migration, deleting tests, force pushes -->
+- Never make network calls from this repo.
+- Never edit SCHEMA_VERSION without following the ledgerlite-migration skill.
+- Never delete or weaken existing tests.
+- Never run git push.
+- Never touch .kiro/ without asking first.
 
 ## Schema changes
 Any change to `Entry` fields or the JSON layout must follow the `ledgerlite-migration` skill in `.kiro/skills/`.
