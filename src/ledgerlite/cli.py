@@ -38,6 +38,12 @@ def cmd_add(args: argparse.Namespace) -> int:
     entries.append(entry)
     store.save(args.ledger, entries)
     print(f"added {args.category} {args.amount} on {args.day}")
+    budgets = store.load_budgets(args.ledger)
+    if budget.is_over_budget(entries, budgets, args.category, day.year, day.month):
+        print(
+            f"warning: {args.category} is over budget for {day.year}-{day.month:02d}",
+            file=sys.stderr,
+        )
     return 0
 
 

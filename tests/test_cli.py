@@ -121,3 +121,53 @@ def test_budget_status_omits_unbudgeted_category(tmp_path, capsys):
     out = capsys.readouterr().out
     assert "transport" not in out
     assert "food" in out
+
+
+# --- Task 4: over-budget warning in add ---
+
+def test_add_over_budget_warning_on_stderr(tmp_path, capsys):
+    ledger = tmp_path / "l.json"
+    # budget of 10 for food; add 50 which exceeds it
+    main(["--ledger", str(ledger), "budget", "set", "food", "10"])
+    capsys.readouterr()
+    rc = main(["--ledger", str(ledger), "add", "--day", "2026-04-01",
+               "--category", "food", "--amount", "50.00"])
+    assert rc == 0
+    captured = capsys.readouterr()
+    assert "warning" in captured.err
+    assert "food" in captured.err
+    assert "over budget" in captured.err
+
+
+def test_add_under_budget_no_warning(tmp_path, capsys):
+    ledger = tmp_path / "l.json"
+    # budget of 500; add 50 which is within budget
+    main(["--ledger", str(ledger), "budget", "set", "food", "500"])
+    capsys.readouterr()
+    rc = main(["--ledger", str(ledger), "add", "--day", "2026-04-01",
+               "--category", "food", "--amount", "50.00"])
+    assert rc == 0
+    assert capsys.readouterr().err == ""
+
+
+def test_add_no_budget_no_warning(tmp_path, capsys):
+    ledger = tmp_path / "l.json"
+    # no budget set at all
+    rc = main(["--ledger", str(ledger), "add", "--day", "2026-04-01",
+               "--category", "food", "--amount", "50.00"])
+    assert rc == 0
+    assert capsys.readouterr().err == ""
+
+
+def test_add_over_budget_entry_persisted(tmp_path, capsys):
+    ledger = tmp_path / "l.json"
+    # budget of 10; add 50 which exceeds it — entry must still be saved
+    main(["--ledger", str(ledger), "budget", "set", "food", "10"])
+    capsys.readouterr()
+    main(["--ledger", str(ledger), "add", "--day", "2026-04-01",
+          "--category", "food", "--amount", "50.00"])
+    capsys.readouterr()
+    main(["--ledger", str(ledger), "list"])
+    out = capsys.readouterr().out
+    assert "50.00" in out
+    assert "food" in out
