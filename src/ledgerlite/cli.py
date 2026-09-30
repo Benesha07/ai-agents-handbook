@@ -6,7 +6,7 @@ from datetime import date
 from decimal import Decimal
 from pathlib import Path
 
-from . import report, store
+from . import budget, report, store
 from .models import Entry
 
 DEFAULT_LEDGER = Path("ledger.json")
@@ -38,6 +38,12 @@ def cmd_add(args: argparse.Namespace) -> int:
     entries.append(entry)
     store.save(args.ledger, entries)
     print(f"added {args.category} {args.amount} on {args.day}")
+    budgets = store.load_budgets(args.ledger)
+    if budget.is_over_budget(entries, budgets, args.category, day.year, day.month):
+        print(
+            f"warning: {args.category} is over budget for {day.year}-{day.month:02d}",
+            file=sys.stderr,
+        )
     return 0
 
 
@@ -54,6 +60,40 @@ def cmd_report(args: argparse.Namespace) -> int:
     entries = store.load(args.ledger)
     month_entries = report.entries_in_month(entries, args.year, args.month)
     print(report.format_report(args.year, args.month, report.totals_by_category(month_entries)))
+    return 0
+
+
+def _validate_budget_amount(amount: str) -> int | None:
+    """Validate budget amount. Returns exit code on failure, None on success."""
+    try:
+        value = Decimal(amount)
+    except Exception:
+        print("error: amount must be a positive number", file=sys.stderr)
+        return 2
+    if value <= 0:
+        print("error: amount must be a positive number", file=sys.stderr)
+        return 2
+    return None
+
+
+def cmd_budget_set(args: argparse.Namespace) -> int:
+    rc = _validate_budget_amount(args.amount)
+    if rc is not None:
+        return rc
+    budgets = store.load_budgets(args.ledger)
+    budgets[args.category] = Decimal(args.amount)
+    store.save_budgets(args.ledger, budgets)
+    print(f"budget {args.category} set to {args.amount}")
+    return 0
+
+
+def cmd_budget_status(args: argparse.Namespace) -> int:
+    entries = store.load(args.ledger)
+    budgets = store.load_budgets(args.ledger)
+    rows = budget.budget_status(entries, budgets, args.year, args.month)
+    print(f"Budget status {args.year}-{args.month:02d}")
+    for category, bgt, spent, remaining in rows:
+        print(f"  {category:<16}{bgt:>12.2f}{spent:>12.2f}{remaining:>12.2f}")
     return 0
 
 
@@ -78,6 +118,20 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--year", type=int, required=True)
     r.add_argument("--month", type=int, required=True)
     r.set_defaults(func=cmd_report)
+
+    b = sub.add_parser("budget", help="manage category budgets")
+    bsub = b.add_subparsers(dest="budget_command", required=True)
+
+    bs = bsub.add_parser("set", help="set a budget for a category")
+    bs.add_argument("category")
+    bs.add_argument("amount")
+    bs.set_defaults(func=cmd_budget_set)
+
+    bst = bsub.add_parser("status", help="show budget vs spend for a month")
+    bst.add_argument("--year", type=int, required=True)
+    bst.add_argument("--month", type=int, required=True)
+    bst.set_defaults(func=cmd_budget_status)
+
     return p
 
 
