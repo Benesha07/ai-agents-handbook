@@ -13,6 +13,12 @@ def test_month_range_mid_year():
     assert report.month_range(2026, 4) == (date(2026, 4, 1), date(2026, 4, 30))
 
 
+def test_month_range_december():
+    # Fails today: month_range does date(year, month + 1, 1) which raises
+    # ValueError when month=12 because there is no month 13.
+    assert report.month_range(2026, 12) == (date(2026, 12, 1), date(2026, 12, 31))
+
+
 def test_entries_in_month_includes_both_ends():
     entries = [
         _e("2026-04-01", "a", "1"),
