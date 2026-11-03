@@ -37,3 +37,25 @@ The reviewer agent independently identified the hardcoded token, incorrect slice
 - **CI-detectable:** Incorrect slicing, weakened assertions, missing behaviour tests, and many exception-handling problems. Dependency checks can detect unpinned packages.
 - **Not reliably CI-detectable alone:** Whether users understand and consent to remote uploads, whether a token is genuinely live, and whether the privacy design is appropriate.
 - **Decision:** Do not merge until security, correctness, data-integrity, and test-contract issues are fixed.
+## Chapter 8 – Reviewer Agent Comparison
+
+- Human review identified 7 findings.
+- Reviewer agent identified 10 findings.
+- Agent additionally identified missing tests for remote sync.
+- Agent identified unhandled network exceptions.
+- Agent identified the repository-wide restriction on network calls.
+
+### Reviewer Improvement
+
+Added mandatory checks to reviewer.yaml:
+- Verify tests for every new function and CLI command.
+- Check network timeout and connection error handling.
+- Check unsuccessful HTTP responses.
+
+### Verdict
+
+DO NOT MERGE.
+
+The PR contains a hardcoded token, weakened tests,
+swallowed exceptions, unpinned dependencies and
+unauthorized remote data transmission.

@@ -10,6 +10,9 @@ prompt: |
   Look specifically for: secrets in code, exceptions that are swallowed, unpinned dependencies,
   changes outside the stated scope, tests that were weakened or removed, behaviour changes without tests.
   End with a one-line verdict: MERGE, MERGE AFTER FIXES, or DO NOT MERGE.
+  Additional mandatory checks:
+  - For every new function or CLI command, verify tests cover success, failure, and expected exit codes.
+  - For every network call, check timeout handling, connection errors, and unsuccessful HTTP responses.
 resources:
   - file://AGENTS.md
 permissions:
